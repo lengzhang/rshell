@@ -10,18 +10,23 @@
 #include <sys/wait.h>
 
 int Find_Connector(const char * cStr, const int start, char & result);
-char * CStr_Copy(const char * cStr, const int start, const int end);
 void Split_Command(std :: string cStr, std::vector<char *> & cmdVector, std::vector<int> & cntVector);
+char * Cut_Comment(char * args);
 
 int Do_EXEC (char * args);
 int EXEC (char * args[]);
 
 int main (int argc, char * argv[])
 {
+	char hostname[20];
+	gethostname(hostname,256);
+
+	char * username = getlogin();
+
 	std :: string cmdStr;
 	do
 	{
-		std :: cout << "$ ";
+		std :: cout << username << "@" << hostname << "$ ";
 		std :: getline (std :: cin, cmdStr);
 
 		if (!cmdStr.empty())
@@ -29,8 +34,6 @@ int main (int argc, char * argv[])
 			char * cmdCStr = new char[cmdStr.length () + 1];
 			std :: strcpy (cmdCStr, cmdStr.c_str());
 			cmdCStr[cmdStr.length ()] = '\0';
-			//printf ("%s\n", cmdCStr);
-			//Do_EXEC (cmdCStr);
 
 			std::vector<char *> cmdVector;
 			std::vector<int> cntVector;
@@ -40,8 +43,6 @@ int main (int argc, char * argv[])
 			int last_status = 0;
 			for (int i = 0; i < cmdVector.size(); ++i)
 			{
-				//std :: cout << cntVector[i] << std :: endl;
-				//Do_EXEC (cmdVector[i]);
 				if (cntVector[i] == 0)							//First cmd or after ';'
 				{
 					last_status = Do_EXEC (cmdVector[i]);
@@ -63,6 +64,7 @@ int main (int argc, char * argv[])
 			}
 		}
 	} while (1);
+
 	return 0;
 }
 
@@ -82,11 +84,6 @@ int Find_Connector(const char * cStr, const int start, char & result)
 	}
 	result = '\0';
 	return -1;
-}
-
-char * CStr_Copy(const char * cStr, const int start, const int end)
-{
-	return 0;
 }
 
 void Split_Command(std :: string cStr, std::vector<char *> & cmdVector, std::vector<int> & cntVector)
@@ -131,12 +128,32 @@ void Split_Command(std :: string cStr, std::vector<char *> & cmdVector, std::vec
 	}
 }
 
+char * Cut_Comment(char * args)
+{
+	int i = 0;
+	while (args[i] != '\0')
+	{
+		if (args[i] == '#')
+		{
+			char * tmp = new char[i+1];
+			for (int j = 0; j < i; ++j)
+			{
+				tmp[j] = args[j];
+			}
+			tmp[i] = '\0';
+			return tmp;
+		}
+		i++;
+	}
+	return args;
+}
+
 int Do_EXEC (char * args)
 {
-	if (strcmp(args, "exit") == 0)
+	if (strncmp(args, "exit", 4) == 0)
 		return -1;
 
-	char * tmpARGS = args;
+	char * tmpARGS = Cut_Comment(args);
 	std :: vector <char *> args_vector;
 	char * pch = strtok (tmpARGS, " ");
 	while (pch != NULL)
