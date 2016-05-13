@@ -1,1 +1,1 @@
-hw2 start
+This program can run single command or multiple commands.
