@@ -1,4 +1,5 @@
 all: rshell
 
 rshell: src/main.cpp
-	g++ -Wall -Werror -ansi -pedantic src/main.cpp -o rshell
+	mkdir bin
+	g++ -Wall -Werror -ansi -pedantic src/main.cpp -o bin/rshell
