@@ -2,7 +2,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
-
+#include <sys/param.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,13 +20,14 @@ int main (int argc, char * argv[])
 {
 	char hostname[20];
 	gethostname(hostname,256);
-
+	char current [MAXPATHLEN];
+        char * currentDir=getcwd(current,MAXPATHLEN);
 	char * username = getlogin();
 
 	std :: string cmdStr;
 	do
 	{
-		std :: cout << username << "@" << hostname << "$ ";
+		std :: cout << username << "@" << hostname << currentDir << "$ ";
 		std :: getline (std :: cin, cmdStr);
 
 		if (!cmdStr.empty())
@@ -41,7 +42,7 @@ int main (int argc, char * argv[])
 			
 			//Execute commands
 			int last_status = 0;
-			for (int i = 0; i < cmdVector.size(); ++i)
+			for (unsigned int i = 0; i < cmdVector.size(); ++i)
 			{
 				if (cntVector[i] == 0)							//First cmd or after ';'
 				{
@@ -55,6 +56,31 @@ int main (int argc, char * argv[])
 				{
 					last_status = Do_EXEC (cmdVector[i]);
 				}
+				if (last_status == -2)
+                                {
+                                        //Execute cd
+                                        std :: cout << "Executing: cd" << std :: endl;
+                    			char * temp=cmdVector[i];
+                    			char directory [MAXPATHLEN];
+                    			directory[0]='/';
+                    			int j=1;
+                    			for (unsigned int i = 3;i<strlen(temp); i++)
+                              		{
+                        			if(temp[i]==' '){}
+                        			else
+                        			{
+                            				directory[j]=temp[i];
+                            				j++;
+                        			}
+                        		}
+                    			std::cout<<strcat(currentDir,directory)<<std::endl;
+                           
+                    			int rc=1;
+                    			if(rc<0)
+                    			{
+                        			std::cout<<"Error"<<std::endl;
+                    			}
+                              }
 			}
 		}
 	} while (1);
@@ -160,6 +186,10 @@ int Do_EXEC (char * args)
 		std :: cout << "Executing: exit" << std :: endl;
 		exit(0);
 	}
+
+	if (strncmp(args, "cd", 2) == 0)
+                return -2;
+
 
 	char * tmpARGS = Cut_Comment(args);
 	std :: vector <char *> args_vector;
