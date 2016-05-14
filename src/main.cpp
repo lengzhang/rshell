@@ -55,12 +55,6 @@ int main (int argc, char * argv[])
 				{
 					last_status = Do_EXEC (cmdVector[i]);
 				}
-				if (last_status == -1)
-				{
-					//Exit program
-					std :: cout << "Executing: exit" << std :: endl;
-					return 0;
-				}
 			}
 		}
 	} while (1);
@@ -151,7 +145,11 @@ char * Cut_Comment(char * args)
 int Do_EXEC (char * args)
 {
 	if (strncmp(args, "exit", 4) == 0)
-		return -1;
+	{
+		//Exit program
+		std :: cout << "Executing: exit" << std :: endl;
+		exit(0);
+	}
 
 	char * tmpARGS = Cut_Comment(args);
 	std :: vector <char *> args_vector;
