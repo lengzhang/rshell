@@ -47,16 +47,7 @@ int Do_Commands(std :: string cmdStr)
 		std::vector<char *> cmdVector;
 		std::vector<int> cntVector;
 		Split_Command(cmdStr, cmdVector, cntVector);
-
-
-		for (int i = 0; i < cmdVector.size(); ++i)
-		{
-			std :: cout << cmdVector[i] << std :: endl;
-			if (cmdVector[i][0] == '(')
-			{
-				std :: cout << "HaHa" << std :: endl;
-			}
-		}
+		
 		//Execute commands
 		int last_status = 0;
 		for (int i = 0; i < cmdVector.size(); ++i)
@@ -169,7 +160,16 @@ char * Cut_Comment(char * args)
 
 int Do_EXEC (char * args)
 {
-	if (strncmp(args, "exit", 4) == 0)
+	if (strncmp(args, "(", 1) == 0)
+	{
+		char * new_args = new char[strlen(args)-2];
+		for (int i = 0; i < strlen(args)-1; ++i)
+		{
+			new_args[i] = args[i+1];
+		}
+		return Do_Commands(new_args);
+	}
+	else if (strncmp(args, "exit", 4) == 0)
 	{
 		//Exit program
 		std :: cout << "Executing: exit" << std :: endl;
