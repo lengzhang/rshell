@@ -76,14 +76,14 @@ int Find_Connector(const char * cStr, const int start, char & result)
 			return i;
         else if (cStr[i] == '(')
             return i;
-        else if ((cStr[i] == 't') && (cStr[i + 1] !='e') && (cStr[i + 2] !='s') && (cStr[i + 3] !='t'))
+        else if ((cStr[i] == 't') && (cStr[i + 1] =='e') && (cStr[i + 2] =='s') && (cStr[i + 3] =='t'))
             return i;
         else if ((cStr[i] == ')') && (cStr[i + 1] !='\0'))
-            return i;
+            return i+1;
         else if (cStr[i] == '[')
             return i;
         else if ((cStr[i] == ']') && (cStr[i + 1] !='\0'))
-            return i;
+            return i+1;
 		i++;
 	}
 	result = '\0';
