@@ -38,7 +38,7 @@ int main (int argc, char * argv[])
 			std::vector<char *> cmdVector;
 			std::vector<int> cntVector;
 			Split_Command(cmdStr, cmdVector, cntVector);
-			
+
 			//Execute commands
 			int last_status = 0;
 			for (int i = 0; i < cmdVector.size(); ++i)
@@ -74,16 +74,6 @@ int Find_Connector(const char * cStr, const int start, char & result)
 			return i;
 		else if ((cStr[i] == '|') && (cStr[i + 1] == '|'))
 			return i;
-        else if (cStr[i] == '(')
-            return i;
-        else if ((cStr[i] == 't') && (cStr[i + 1] =='e') && (cStr[i + 2] =='s') && (cStr[i + 3] =='t'))
-            return i;
-        else if ((cStr[i] == ')') && (cStr[i + 1] !='\0'))
-            return i+1;
-        else if (cStr[i] == '[')
-            return i;
-        else if ((cStr[i] == ']') && (cStr[i + 1] !='\0'))
-            return i+1;
 		i++;
 	}
 	result = '\0';
@@ -160,24 +150,77 @@ int Do_EXEC (char * args)
 		std :: cout << "Executing: exit" << std :: endl;
 		exit(0);
 	}
+	else if (strncmp(args, "[", 1) == 0 || strncmp(args, "test", 4) == 0)
+	{
+		char * tmpARGS = Cut_Comment(args);
+		std :: vector <char *> args_vector;
+		char * pch = strtok (tmpARGS, " ");
+		while (pch != NULL)
+		{
+			//If got "[", then push "test"
+			if (strncmp(pch, "[", 1) == 0)
+			{
+				char temp[4] = {'t','e','s','t'};
+				args_vector.push_back(temp);
+			}
+			//If got "]", then skip
+			else if (strncmp(pch, "]", 1) != 0)
+			{
+				args_vector.push_back (pch);
+			}
+			pch = strtok (NULL, " ");
+		}
+		args_vector.push_back (0);
+		//Check is there any flag
+		if (strncmp(args_vector[1], "-e", 2) != 0 && strncmp(args_vector[1], "-f", 2) != 0 && strncmp(args_vector[1], "-d", 2) != 0 )
+		{
+			char temp[2] = {'-','e'};
+			std :: vector <char *> :: iterator it;
+			it = args_vector.begin();
+			it++;
+			args_vector.insert(it, temp);
+		}
 
-	char * tmpARGS = Cut_Comment(args);
-	std :: vector <char *> args_vector;
-	char * pch = strtok (tmpARGS, " ");
-	while (pch != NULL)
-	{
-		args_vector.push_back (pch);
-		pch = strtok (NULL, " ");
+		int args_size = args_vector.size ();
+		char * args_result[10];
+		for (int i = 0; i < args_size; i++)
+		{
+			args_result[i] = args_vector[i];
+		}
+		int status = EXEC(args_result);
+		if (status == 0)
+		{
+			std :: cout << "(True)" << std :: endl;
+		}
+		else
+		{
+			std :: cout << "(False)" << std :: endl;
+		}
+		
+		
+		return status;
 	}
-	args_vector.push_back (0);
-	int args_size = args_vector.size ();
-	char * args_result[10];
-	for (int i = 0; i < args_size; i++)
+	else
 	{
-		args_result[i] = args_vector[i];
+		char * tmpARGS = Cut_Comment(args);
+		std :: vector <char *> args_vector;
+		char * pch = strtok (tmpARGS, " ");
+		while (pch != NULL)
+		{
+			args_vector.push_back (pch);
+			pch = strtok (NULL, " ");
+		}
+		args_vector.push_back (0);
+		int args_size = args_vector.size ();
+		char * args_result[10];
+		for (int i = 0; i < args_size; i++)
+		{
+			args_result[i] = args_vector[i];
+		}
+		
+		return EXEC(args_result);
 	}
-	
-	return EXEC(args_result);
+	return 0;
 }
 
 int EXEC (char * args[])
