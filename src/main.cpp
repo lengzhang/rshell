@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+int Do_Commands(std :: string cmdStr);
 int Find_Connector(const char * cStr, const int start, char & result);
 void Split_Command(std :: string cStr, std::vector<char *> & cmdVector, std::vector<int> & cntVector);
 char * Cut_Comment(char * args);
@@ -28,43 +29,67 @@ int main (int argc, char * argv[])
 	{
 		std :: cout << username << "@" << hostname << "$ ";
 		std :: getline (std :: cin, cmdStr);
-
-		if (!cmdStr.empty())
-		{
-			char * cmdCStr = new char[cmdStr.length () + 1];
-			std :: strcpy (cmdCStr, cmdStr.c_str());
-			cmdCStr[cmdStr.length ()] = '\0';
-
-			std::vector<char *> cmdVector;
-			std::vector<int> cntVector;
-			Split_Command(cmdStr, cmdVector, cntVector);
-
-			//Execute commands
-			int last_status = 0;
-			for (int i = 0; i < cmdVector.size(); ++i)
-			{
-				if (cntVector[i] == 0)							//First cmd or after ';'
-				{
-					last_status = Do_EXEC (cmdVector[i]);
-				}
-				else if (cntVector[i] == 1 && last_status == 0)	//After '&&'
-				{
-					last_status = Do_EXEC (cmdVector[i]);
-				}
-				else if (cntVector[i] == 2 && last_status != 0)	//After '||'
-				{
-					last_status = Do_EXEC (cmdVector[i]);
-				}
-			}
-		}
+		Do_Commands(cmdStr);
+		
 	} while (1);
 
 	return 0;
 }
 
+int Do_Commands(std :: string cmdStr)
+{
+	if (!cmdStr.empty())
+	{
+		char * cmdCStr = new char[cmdStr.length () + 1];
+		std :: strcpy (cmdCStr, cmdStr.c_str());
+		cmdCStr[cmdStr.length ()] = '\0';
+	
+		std::vector<char *> cmdVector;
+		std::vector<int> cntVector;
+		Split_Command(cmdStr, cmdVector, cntVector);
+
+
+		for (int i = 0; i < cmdVector.size(); ++i)
+		{
+			std :: cout << cmdVector[i] << std :: endl;
+			if (cmdVector[i][0] == '(')
+			{
+				std :: cout << "HaHa" << std :: endl;
+			}
+		}
+		//Execute commands
+		int last_status = 0;
+		for (int i = 0; i < cmdVector.size(); ++i)
+		{
+			if (cntVector[i] == 0)							//First cmd or after ';'
+			{
+				last_status = Do_EXEC (cmdVector[i]);
+			}
+			else if (cntVector[i] == 1 && last_status == 0)	//After '&&'
+			{
+				last_status = Do_EXEC (cmdVector[i]);
+			}
+			else if (cntVector[i] == 2 && last_status != 0)	//After '||'
+			{
+				last_status = Do_EXEC (cmdVector[i]);
+			}
+		}
+		return last_status;
+	}
+	return -1;
+}
+
 int Find_Connector(const char * cStr, const int start, char & result)
 {
 	int i = start;
+	if (cStr[i] == '(')
+	{
+		i++;
+		while (cStr[i] != ')')
+		{
+			i++;
+		}
+	}
 	while (cStr[i] != '\0')
 	{
 		result = cStr[i];
