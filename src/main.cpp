@@ -50,7 +50,7 @@ int Do_Commands(std :: string cmdStr)
 		
 		//Execute commands
 		int last_status = 0;
-		for (int i = 0; i < cmdVector.size(); ++i)
+		for (unsigned int i = 0; i < cmdVector.size(); ++i)
 		{
 			if (cntVector[i] == 0)							//First cmd or after ';'
 			{
@@ -163,7 +163,7 @@ int Do_EXEC (char * args)
 	if (strncmp(args, "(", 1) == 0)
 	{
 		char * new_args = new char[strlen(args)-2];
-		for (int i = 0; i < strlen(args)-1; ++i)
+		for (unsigned int i = 0; i < strlen(args)-1; ++i)
 		{
 			new_args[i] = args[i+1];
 		}
@@ -208,7 +208,7 @@ int Do_EXEC (char * args)
 
 		int args_size = args_vector.size ();
 		char * args_result[10];
-		for (int i = 0; i < args_size; i++)
+		for (unsigned int i = 0; i < args_size; i++)
 		{
 			args_result[i] = args_vector[i];
 		}
@@ -238,7 +238,7 @@ int Do_EXEC (char * args)
 		args_vector.push_back (0);
 		int args_size = args_vector.size ();
 		char * args_result[10];
-		for (int i = 0; i < args_size; i++)
+		for (unsigned int i = 0; i < args_size; i++)
 		{
 			args_result[i] = args_vector[i];
 		}
