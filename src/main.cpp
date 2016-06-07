@@ -9,6 +9,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <fcntl.h>
+
+
 int Do_Commands(std :: string cmdStr);
 int Find_Connector(const char * cStr, const int start, char & result);
 void Split_Command(std :: string cStr, std::vector<char *> & cmdVector, std::vector<int> & cntVector);
@@ -16,6 +19,7 @@ char * Cut_Comment(char * args);
 
 int Do_EXEC (char * args);
 int EXEC (char * args[]);
+int Do_Redirection (char * args);
 
 int main (int argc, char * argv[])
 {
@@ -84,11 +88,11 @@ int Find_Connector(const char * cStr, const int start, char & result)
 	while (cStr[i] != '\0')
 	{
 		result = cStr[i];
-		if (cStr[i] == ';')
+		if ((cStr[i] == ';') && (cStr[i + 1] == ' '))
 			return i;
-		else if ((cStr[i] == '&') && (cStr[i + 1] == '&'))
+		else if ((cStr[i - 1] == ' ') && (cStr[i] == '&') && (cStr[i + 1] == '&') && (cStr[i + 2] == ' '))
 			return i;
-		else if ((cStr[i] == '|') && (cStr[i + 1] == '|'))
+		else if ((cStr[i - 1] == ' ') && (cStr[i] == '|') && (cStr[i + 1] == '|') && (cStr[i + 2] == ' '))
 			return i;
 		i++;
 	}
@@ -158,8 +162,26 @@ char * Cut_Comment(char * args)
 	return args;
 }
 
+bool Find_Redirection (char * args)
+{
+	for (int i = 0; i < strlen(args); ++i)
+	{
+		if (((args[i] == ' ') && (args[i + 1] == '<') && (args[i + 2] == ' '))
+			|| ((args[i] == ' ') && (args[i + 1] == '<') && (args[i + 2] == '<') && (args[i + 3] == ' '))
+			|| ((args[i] == ' ') && (args[i + 1] == '<') && (args[i + 2] == ' '))
+			|| ((args[i] == ' ') && (args[i + 1] == '<') && (args[i + 2] == '<') && (args[i + 3] == ' '))
+			|| ((args[i] == ' ') && (args[i + 1] == '|') && (args[i + 2] == ' ')))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 int Do_EXEC (char * args)
 {
+	std :: cout << args << std :: endl;
+
 	if (strncmp(args, "(", 1) == 0)
 	{
 		char * new_args = new char[strlen(args)-2];
@@ -169,7 +191,12 @@ int Do_EXEC (char * args)
 		}
 		return Do_Commands(new_args);
 	}
-	else if (strncmp(args, "exit", 4) == 0)
+	else if (Find_Redirection(args))
+	{
+		std :: cout << "Found Redirection" << std :: endl;
+		return Do_Redirection(args);
+	}
+	else if ((strncmp(args, "exit", 4) == 0) || (strncmp(args, "quit", 4) == 0))
 	{
 		//Exit program
 		std :: cout << "Executing: exit" << std :: endl;
@@ -279,3 +306,152 @@ int EXEC (char * args[])
 
 	return status;
 }
+
+
+
+int Do_Redirection (char * args)
+{
+	char * tmpARGS = Cut_Comment(args);
+	std :: vector <char *> args_vector;
+	char * pch = strtok (tmpARGS, " ");
+	while (pch != NULL)
+	{
+		args_vector.push_back (pch);
+		pch = strtok (NULL, " ");
+	}
+	//args_vector.push_back (0);
+
+	for (int i = 0; i < args_vector.size(); ++i)
+	{
+		std :: cout << args_vector[i] << std :: endl;
+	}
+
+	std :: cout << "----------" << std :: endl;
+
+	char * in_file = NULL;
+	char * out_file = NULL;
+	char * out_append_file = NULL;
+
+	std :: vector<char *> commands;
+	int in_ite = -1;
+	int out_ite = -1;
+	int out_append_ite = -1;
+	int ite = 0;
+	for (int i = 0; i < args_vector.size();)
+	{
+    	if ((strncmp(args_vector[i], "<", 1) == 0) || (strncmp(args_vector[i], "<<", 2) == 0))
+    	{
+    		in_file = args_vector[i + 1];
+    		in_ite = ite;
+    		i+=2;
+    	}
+    	else if (strncmp(args_vector[i], ">>", 2) == 0)
+    	{
+    		out_append_file = args_vector[i + 1];
+    		out_ite = ite;
+    		i+=2;
+    	}
+    	else if (strncmp(args_vector[i], ">", 1) == 0)
+    	{
+    		out_file = args_vector[i + 1];
+    		out_append_ite = ite;
+    		i+=2;
+    	}
+    	else if (strncmp(args_vector[i], "|", 1) == 0)
+    	{
+    		commands.push_back(0);
+    		ite++;
+    		i++;
+    	}
+    	else
+    	{
+    		commands.push_back(args_vector[i]);
+    		i++;
+    	}
+    }
+    commands.push_back(0);
+
+    std :: cout << in_ite << " " << out_ite << " " << out_append_ite<< std :: endl;
+
+    if (in_file != NULL)
+    {
+    	std :: cout << "in_file: " << in_file << std :: endl;
+    }
+    if (out_file != NULL)
+    {
+    	std :: cout << "out_file: " << out_file << std :: endl;
+    }
+    if (out_append_file != NULL)
+    {
+    	std :: cout << "out_append_file: " << out_append_file << std :: endl;
+    }
+    for (int i = 0; i < commands.size(); ++i)
+    {
+    	if (commands[i] != 0)
+    	{
+    		std :: cout << commands[i] << std :: endl;
+    	}
+    	else
+    	{
+    		std :: cout << std :: endl;
+    	}
+    }
+    std :: cout << "----------" << std :: endl;
+
+
+
+    int pipe_fd1[2], pipe_fd2[2];
+    //pid_t c_pid;
+	//int pid_ite = 0;
+
+    std :: vector <char *> temp_commands;
+	int status = 0;
+
+	pipe(pipe_fd1);
+	pipe(pipe_fd2);
+
+	std::vector<char**> v;
+    for (int i = 0; i < commands.size(); ++i)
+    {
+    	if (commands[i] != 0)
+    	{
+    		temp_commands.push_back(commands[i]);
+    	}
+    	else
+    	{
+    		temp_commands.push_back(0);
+    		char * args_result[10];
+    		for (int j = 0; j < temp_commands.size(); ++j)
+    		{
+    			args_result[j] = temp_commands[j];
+    		}
+    		int k = 0;
+    		while (args_result[k] != 0)
+    		{
+    			std :: cout << args_result[k] << " ";
+    			k++;
+    		}
+    		v.push_back(args_result);
+    		
+    		std :: cout << std :: endl;
+    		temp_commands.clear();
+    	}
+    }
+
+    std :: cout << "----------" << std :: endl;
+
+    std :: cout << v[0][0] << std :: endl;
+
+	exit(0);
+	return status;
+}
+
+
+
+
+
+
+
+
+
+
