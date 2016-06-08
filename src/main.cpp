@@ -15,6 +15,7 @@
 int Do_Commands(std :: string cmdStr);
 int Find_Connector(const char * cStr, const int start, char & result);
 void Split_Command(std :: string cStr, std::vector<char *> & cmdVector, std::vector<int> & cntVector);
+bool Find_Redirection (char * args);
 char * Cut_Comment(char * args);
 
 int Do_EXEC (char * args);
@@ -25,18 +26,16 @@ int main (int argc, char * argv[])
 {
 	char hostname[20];
 	gethostname(hostname,256);
-
 	char * username = getlogin();
 
-	std :: string cmdStr;
 	do
 	{
+		std :: string cmdStr;
 		std :: cout << username << "@" << hostname << "$ ";
 		std :: getline (std :: cin, cmdStr);
 		Do_Commands(cmdStr);
-		
-	} while (1);
-
+		printf("\n");
+	} while (true);
 	return 0;
 }
 
@@ -180,8 +179,7 @@ bool Find_Redirection (char * args)
 
 int Do_EXEC (char * args)
 {
-	//std :: cout << args << std :: endl;
-
+	printf("\nCommand: %s\n", args);
 	if (strncmp(args, "(", 1) == 0)
 	{
 		char * new_args = new char[strlen(args)-2];
@@ -191,17 +189,19 @@ int Do_EXEC (char * args)
 		}
 		return Do_Commands(new_args);
 	}
+	//Redirection
 	else if (Find_Redirection(args))
 	{
-		std :: cout << "Found Redirection" << std :: endl;
+		//std :: cout << "Found Redirection" << std :: endl;
+		
 		return Do_Redirection(args);
 	}
 	else if ((strncmp(args, "exit", 4) == 0) || (strncmp(args, "quit", 4) == 0))
 	{
 		//Exit program
-		std :: cout << "Executing: exit" << std :: endl;
 		exit(0);
 	}
+	//Test Command
 	else if (strncmp(args, "[", 1) == 0 || strncmp(args, "test", 4) == 0)
 	{
 		char * tmpARGS = Cut_Comment(args);
@@ -248,8 +248,6 @@ int Do_EXEC (char * args)
 		{
 			std :: cout << "(False)" << std :: endl;
 		}
-		
-		
 		return status;
 	}
 	else
@@ -289,7 +287,7 @@ int EXEC (char * args[])
 	}
 	else if (c_pid == 0)
 	{
-		printf ("Executing: %s\n", args[0]);
+		//printf ("Executing: %s\n", args[0]);
 		execvp (args[0], args);
 		perror ("Execve Faild");
 		exit (1);
@@ -309,21 +307,24 @@ int EXEC (char * args[])
 
 int Do_Redirection (char * args)
 {
-	std :: cout << args << std :: endl;
-	std :: cout << "----------" << std :: endl;
-	printf("Commands: %s\n", args);
+	//std :: cout << args << std :: endl;
+	//std :: cout << "----------" << std :: endl;
+	//printf("Commands: %s\n", args);
 	int rc = 0;
 	FILE *fp;
 
 	char result_buf[1024];
 
+	//Opened pipe to exe commands
 	fp = popen(args, "r");
 	if (fp == NULL)
 	{
 		std :: cout << "popen fail" << std :: endl;
+		printf("popen fail");
 		exit(1);
+		return -1;
 	}
-
+	//Print result output
 	while (fgets(result_buf, sizeof(result_buf), fp) != NULL)
 	{
 		if (result_buf[strlen(result_buf) - 1] == '\n')
@@ -339,12 +340,14 @@ int Do_Redirection (char * args)
 	{
 		std :: cout << "fp close fail" << std :: endl;
 		exit(1);
+		return -1;
 	}
 	else
 	{
-		std :: cout << "fp close succeed" << std :: endl;
-		dup2(rc, fileno(stdin));
+		//std :: cout << "fp close succeed" << std :: endl;
+		return 0;
 	}
+
 	/*
 	std :: vector<char *> commands;
 	char * pch = strtok (args, "|");
@@ -481,8 +484,8 @@ int Do_Redirection (char * args)
 	}
 
 	*/
-	exit(0);
-	return 0;
+	//exit(0);
+	//return 0;
 
 }
 
