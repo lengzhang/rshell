@@ -180,12 +180,12 @@ bool Find_Redirection (char * args)
 
 int Do_EXEC (char * args)
 {
-	std :: cout << args << std :: endl;
+	//std :: cout << args << std :: endl;
 
 	if (strncmp(args, "(", 1) == 0)
 	{
 		char * new_args = new char[strlen(args)-2];
-		for (int i = 0; i < strlen(args)-1; ++i)
+		for (int i = 0; i < strlen(args)-2; ++i)
 		{
 			new_args[i] = args[i+1];
 		}
@@ -307,8 +307,146 @@ int EXEC (char * args[])
 	return status;
 }
 
+int Do_Redirection (char * args)
+{
+	std :: vector<char *> commands;
+	char * pch = strtok (args, "|");
+	while (pch != NULL)
+	{
+		//If first char is ' ', then ignore it.
+		if (pch[0] == ' ')
+		{
+			pch++;
+		}
+		if (pch[strlen(pch) - 1] == ' ')
+		{
+			pch[strlen(pch) - 1] = '\0';
+		}
+		commands.push_back(pch);
+		pch = strtok (NULL, "|");
+	}
+
+	for (int i = 0; i < commands.size(); ++i)
+	{
+		std :: cout << commands[i] << std :: endl;
+	}
 
 
+	int status = 0;
+	int pipe_fd1[2], pipe_fd2[2];
+	pipe(pipe_fd1);
+	pipe(pipe_fd2);
+
+	for (int i = 0; i < commands.size(); ++i)
+	{
+		std :: cout << commands[i] << std :: endl;
+		char * args_result[10];
+		int argc = 0;
+		char * p_command = strtok (commands[i], " ");
+
+		char * file_name = NULL;
+		int file_action = 0; // 0 - Nothin; 1 - Input; 2 - Output; 3 - Output Append;
+
+		while (p_command != NULL)
+		{
+			if (strncmp(p_command, "<", 1) == 0)
+			{
+				file_action = 1;
+				p_command = strtok (NULL, " ");
+				file_name = new char[strlen(p_command)];
+				strcpy (file_name, p_command);
+				p_command = strtok (NULL, " ");
+			}
+			else if (strncmp(p_command, ">>", 2) == 0)
+			{
+				file_action = 3;
+				p_command = strtok (NULL, " ");
+				file_name = new char[strlen(p_command)];
+				strcpy (file_name, p_command);
+				p_command = strtok (NULL, " ");
+			}
+			else if (strncmp(p_command, ">", 1) == 0)
+			{
+				file_action = 2;
+				p_command = strtok (NULL, " ");
+				file_name = new char[strlen(p_command)];
+				strcpy (file_name, p_command);
+				p_command = strtok (NULL, " ");
+			}
+			else
+			{
+				args_result[argc] = new char[strlen(p_command)];
+				strcpy (args_result[argc], p_command);
+				argc++;
+				p_command = strtok (NULL, " ");
+			}
+		}
+		std :: cout << "----------" << std :: endl;
+		for (int j = 0; j < argc; ++j)
+		{
+			std :: cout << args_result[j] << " " << std :: endl;
+		}
+		if (file_name != NULL)
+		{
+			std :: cout << "File: " << file_name << std :: endl;
+		}
+		std :: cout << "----------" << std :: endl << std :: endl;
+
+
+		pid_t c_pid;
+		if ((c_pid = fork()) == 0)
+		{
+			//Redirect stdin
+    		if (file_action == 1)
+    		{
+    			std :: cout << "In File" << std :: endl;
+    			int in_fd = open(in_file, O_CREAT | O_RDONLY, 0666);
+    			close(fileno(stdin));
+    			dup2(in_fd, fileno(stdin));
+    			close(in_fd);
+    		}
+    		else
+    		{
+    			std :: cout << "In Last" << std :: endl;
+    			close(pipe_fd1[1]);
+    			//close(fileno(stdin));
+    			//dup2(pipe_fd1[0], fileno(stdin));
+    			//close(pipe_fd1[1]);
+    		}
+    		if (file_action == 2)
+    		{
+    			/* code */
+    		}
+    		else if (file_action == 3)
+    		{
+    			/* code */
+    		}
+    		else
+    		{
+    			close(pipe_fd2[0]);
+    		}
+
+			execvp (args_result[0], args_result);
+			perror ("Execve Faild");
+    		return 0;
+		}
+		else
+		{
+			close(pipe_fd1[0]);
+			close(pipe_fd2[1]);
+			waitpid(c_pid, &status, 0);
+		}
+
+
+	}
+
+
+	exit(0);
+	return 0;
+}
+
+
+/*
 int Do_Redirection (char * args)
 {
 	char * tmpARGS = Cut_Comment(args);
@@ -396,13 +534,13 @@ int Do_Redirection (char * args)
     		std :: cout << std :: endl;
     	}
     }
-    std :: cout << "----------" << std :: endl;
+    
 
 
 
     int pipe_fd1[2], pipe_fd2[2];
-    //pid_t c_pid;
-	//int pid_ite = 0;
+    pid_t c_pid;
+    int pid_ite = 0;
 
     std :: vector <char *> temp_commands;
 	int status = 0;
@@ -410,7 +548,6 @@ int Do_Redirection (char * args)
 	pipe(pipe_fd1);
 	pipe(pipe_fd2);
 
-	std::vector<char**> v;
     for (int i = 0; i < commands.size(); ++i)
     {
     	if (commands[i] != 0)
@@ -425,27 +562,84 @@ int Do_Redirection (char * args)
     		{
     			args_result[j] = temp_commands[j];
     		}
+    		std :: cout << "----------" << std :: endl;
     		int k = 0;
     		while (args_result[k] != 0)
     		{
     			std :: cout << args_result[k] << " ";
     			k++;
     		}
-    		v.push_back(args_result);
-    		
     		std :: cout << std :: endl;
     		temp_commands.clear();
+
+    		if ((c_pid = fork()) == 0)
+    		{
+    			//Redirect stdin
+    			if (pid_ite == in_ite)
+    			{
+    				std :: cout << "In File" << std :: endl;
+    				int in_fd = open(in_file, O_CREAT | O_RDONLY, 0666);
+    				close(fileno(stdin));
+    				dup2(in_fd, fileno(stdin));
+    				close(in_fd);
+    			}
+    			else
+    			{
+    				std :: cout << "In Last" << std :: endl;
+    				read(pipe_fd1[0]);
+    				//close(fileno(stdin));
+    				//dup2(pipe_fd1[0], fileno(stdin));
+    				//close(pipe_fd1[1]);
+    			}
+
+    			//Redirect stdout to pipe
+    			if (pid_ite == out_ite)
+    			{
+    				std :: cout << "Out File" << std :: endl;
+    				int out_fd = open(out_file, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    				close(fileno(stdout));
+    				dup2(out_fd, fileno(stdout));
+    				close(out_fd);
+    			}
+    			else if (pid_ite == out_append_ite)
+    			{
+    				std :: cout << "Out Append File" << std :: endl;
+    				int out_append_fd = open(out_append_file, O_WRONLY | O_CREAT | O_APPEND, 0666);
+    				close(fileno(stdout));
+    				dup2(out_append_fd, fileno(stdout));
+    				close(out_append_fd);
+    			}
+    			else
+    			{
+    				std :: cout << "Out Next" << std :: endl;
+    				write(pipe_fd2[1]);
+    				//close(fileno(stdout));
+    				//dup2(pipe_fd2[1], fileno(stdout));
+    				//close(pipe_fd2[0]);
+    				//close(pipe_fd2[0]);
+    				//pipe_fd2[1] = dup(fileno(stdout));
+    			}
+
+    			execvp (args_result[0], args_result);
+				perror ("Execve Faild");
+    			return 0;
+    		}
+    		
+    		waitpid(c_pid, &status, 0);
+
+    		close(pipe_fd1[1]);
+    		dup2(pipe_fd2[0], pipe_fd1[1]);
+    		close(pipe_fd2[0]);
+
+    		pid_ite++;
     	}
     }
 
     std :: cout << "----------" << std :: endl;
-
-    std :: cout << v[0][0] << std :: endl;
-
 	exit(0);
 	return status;
 }
-
+*/
 
 
 
