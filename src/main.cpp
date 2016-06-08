@@ -21,9 +21,9 @@ int main (int argc, char * argv[])
 {
     char hostname[20];
     gethostname(hostname,256);
-
+    
     char * username = getlogin();
-
+    
     std :: string cmdStr;
     do
     {
@@ -32,7 +32,7 @@ int main (int argc, char * argv[])
         Do_Commands(cmdStr);
         
     } while (1);
-
+    
     return 0;
 }
 
@@ -43,14 +43,14 @@ int Do_Commands(std :: string cmdStr)
         char * cmdCStr = new char[cmdStr.length () + 1];
         std :: strcpy (cmdCStr, cmdStr.c_str());
         cmdCStr[cmdStr.length ()] = '\0';
-    
+        
         std::vector<char *> cmdVector;
         std::vector<int> cntVector;
         Split_Command(cmdStr, cmdVector, cntVector);
         
         //Execute commands
         int last_status = 0;
-        for (int i = 0; i < cmdVector.size(); ++i)
+        for (unsigned int i = 0; i < cmdVector.size(); ++i)
         {
             if (cntVector[i] == 0)                          //First cmd or after ';'
             {
@@ -161,11 +161,11 @@ char * Cut_Comment(char * args)
 int Do_EXEC (char * args)
 {
     //std :: cout << args << std :: endl;
-
+    
     if (strncmp(args, "(", 1) == 0)
     {
         char * new_args = new char[strlen(args)-2];
-        for (int i = 0; i < strlen(args)-2; ++i)
+        for (unsigned int i = 0; i < strlen(args)-2; ++i)
         {
             new_args[i] = args[i+1];
         }
@@ -207,7 +207,7 @@ int Do_EXEC (char * args)
             it++;
             args_vector.insert(it, temp);
         }
-
+        
         int args_size = args_vector.size ();
         char * args_result[10];
         for (int i = 0; i < args_size; i++)
