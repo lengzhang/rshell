@@ -309,6 +309,43 @@ int EXEC (char * args[])
 
 int Do_Redirection (char * args)
 {
+	std :: cout << args << std :: endl;
+	std :: cout << "----------" << std :: endl;
+	printf("Commands: %s\n", args);
+	int rc = 0;
+	FILE *fp;
+
+	char result_buf[1024];
+
+	fp = popen(args, "r");
+	if (fp == NULL)
+	{
+		std :: cout << "popen fail" << std :: endl;
+		exit(1);
+	}
+
+	while (fgets(result_buf, sizeof(result_buf), fp) != NULL)
+	{
+		if (result_buf[strlen(result_buf) - 1] == '\n')
+		{
+			result_buf[strlen(result_buf) - 1] = '\0';
+		}
+		printf("%s\n", result_buf);
+	}
+
+	rc = pclose(fp);
+
+	if (rc == -1)
+	{
+		std :: cout << "fp close fail" << std :: endl;
+		exit(1);
+	}
+	else
+	{
+		std :: cout << "fp close succeed" << std :: endl;
+		dup2(rc, fileno(stdin));
+	}
+	/*
 	std :: vector<char *> commands;
 	char * pch = strtok (args, "|");
 	while (pch != NULL)
@@ -381,8 +418,10 @@ int Do_Redirection (char * args)
 				p_command = strtok (NULL, " ");
 			}
 		}
+		args_result[argc] = 0;
+		argc++;
 		std :: cout << "----------" << std :: endl;
-		for (int j = 0; j < argc; ++j)
+		for (int j = 0; j < argc - 1; ++j)
 		{
 			std :: cout << args_result[j] << " " << std :: endl;
 		}
@@ -400,7 +439,7 @@ int Do_Redirection (char * args)
     		if (file_action == 1)
     		{
     			std :: cout << "In File" << std :: endl;
-    			int in_fd = open(in_file, O_CREAT | O_RDONLY, 0666);
+    			int in_fd = open(file_name, O_CREAT | O_RDONLY, 0666);
     			close(fileno(stdin));
     			dup2(in_fd, fileno(stdin));
     			close(in_fd);
@@ -415,17 +454,18 @@ int Do_Redirection (char * args)
     		}
     		if (file_action == 2)
     		{
-    			/* code */
+    			
     		}
     		else if (file_action == 3)
     		{
-    			/* code */
+    			
     		}
     		else
     		{
-    			close(pipe_fd2[0]);
+    			std :: cout << "Out Next" << std :: endl;
+    			//close(pipe_fd2[0]);
     		}
-
+    		std :: cout << args_result[0] << std :: endl;
 			execvp (args_result[0], args_result);
 			perror ("Execve Faild");
     		return 0;
@@ -440,9 +480,10 @@ int Do_Redirection (char * args)
 
 	}
 
-
+	*/
 	exit(0);
 	return 0;
+
 }
 
 
